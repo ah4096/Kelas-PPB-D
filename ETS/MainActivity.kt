@@ -59,27 +59,20 @@ class MainActivity : ComponentActivity() {
                 val transactions = remember {mutableStateListOf<Transaction>().apply {
                     addAll(
                         listOf(
-                            Transaction("Gaji", 5000000, LocalDateTime.now()),
+                            Transaction("Gaji", 5000000, LocalDateTime.now().minusSeconds(1)),
                             Transaction("Makan", -25000, LocalDateTime.now()),
-                            Transaction("Transport", -15000, LocalDateTime.now())
+                            Transaction("Transport", -15000, LocalDateTime.now().plusSeconds(1))
                         )
                     )
                 }}
 
                 NavHost(navController = navController, startDestination = "list") {
                     composable("list") {
-                        Scaffold(
-                            floatingActionButton = {
-                                FloatingActionButton(onClick = {
-                                    navController.navigate("add")
-                                }) {
-                                    Text("+")
-                                }
-                            }
-                        ) { innerPadding ->
+                        Scaffold { innerPadding ->
                             TransactionListScreen(
                                 transactions = transactions.sortedByDescending { it.date },
-                                modifier = Modifier.padding(innerPadding)
+                                modifier = Modifier.padding(innerPadding),
+                                navigateToAdd = { navController.navigate("add") }
                             )
                         }
                     }
@@ -101,13 +94,22 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun TransactionListScreen(
     transactions: List<Transaction>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navigateToAdd: () -> Unit = {}
 ) {
-    Column(modifier = modifier) {
-        CumulativeChart(transactions = transactions)
-        LazyColumn {
-            items(transactions) { transaction ->
-                TransactionItem(transaction)
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = navigateToAdd) {
+                Text("+")
+            }
+        }
+    ) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding)) {
+            CumulativeChart(transactions = transactions)
+            LazyColumn {
+                items(transactions) { transaction ->
+                    TransactionItem(transaction)
+                }
             }
         }
     }
@@ -251,11 +253,22 @@ fun AddTransactionScreen(onAdd: (Transaction) -> Unit) {
 @Composable
 fun TransactionListScreenPreview() {
     val sampleTransactions = listOf(
-        Transaction("Gaji", 5000000, LocalDateTime.now()),
+        Transaction("Gaji", 5000000, LocalDateTime.now().minusSeconds(1)),
         Transaction("Makan", -25000, LocalDateTime.now()),
-        Transaction("Transport", -15000, LocalDateTime.now())
+        Transaction("Transport", -15000, LocalDateTime.now().plusSeconds(1))
     )
     MyMoneyNotesTheme {
-        TransactionListScreen(sampleTransactions)
+        TransactionListScreen(
+            transactions = sampleTransactions,
+            navigateToAdd = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AddTransactionScreenPreview() {
+    MyMoneyNotesTheme {
+        AddTransactionScreen(onAdd = {})
     }
 }
